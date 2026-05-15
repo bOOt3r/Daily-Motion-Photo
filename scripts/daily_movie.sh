@@ -129,19 +129,43 @@ for img in "${SESSION_FILES[@]}"; do
 done
 
 # ==============================================================================
-# PART 3: STITCH & CLEANUP
+# PART 3: STITCH & HAND-OFF
 # ==============================================================================
-if [ "$count" -gt 0 ]; then
-    META_DATE="${TARGET_DATE:0:4}-${TARGET_DATE:4:2}-${TARGET_DATE:6:2}"
-    $FFMPEG -y -f concat -safe 0 -i "$LIST_FILE" -c copy \
-        -metadata creation_time="$META_DATE 23:59:00" \
-        "$OUTPUT_FILE" >/dev/null 2>&1
 
-    am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$OUTPUT_FILE" >/dev/null 2>&1
-    echo "Success. Saved $count clips to $OUTPUT_FILE"
-else
-    echo "No clips processed."
+if [ "$count" -eq 0 ]; then
+    echo "No clips found for this session. Cleaning up."
+    # We clear the variable in Tasker so it knows nothing was created
+    tasker_setvar -n LatestMovie -v "NONE" 2>/dev/null
+    exit 0
 fi
 
-# Self-cleaning: remove old temp files not in current session
+echo "Stitching $count clips into $OUTPUT_FILE..."
+
+# 1. Format date for Metadata (YYYYMMDD -> YYYY-MM-DD)
+META_DATE="${TARGET_DATE:0:4}-${TARGET_DATE:4:2}-${TARGET_DATE:6:2}"
+
+# 2. Run the actual FFMPEG Stitch
+# We use -c copy because the individual clips were already standardized in Part 2
+$FFMPEG -y -f concat -safe 0 -i "$LIST_FILE" \
+    -c copy \
+    -metadata creation_time="$META_DATE 23:59:00" \
+    "$OUTPUT_FILE" >/dev/null 2>&1
+
+# 3. Verify and Notify Tasker
+if [ -e "$OUTPUT_FILE" ]; then
+    echo "Success. Saved to $OUTPUT_FILE"
+    
+    # Trigger Android Media Scanner so it shows up in Gallery
+    am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$OUTPUT_FILE" >/dev/null 2>&1
+    
+    # SET TASKER VARIABLE: This is the magic part for your Move action
+    # This allows Tasker to use %LatestMovie as the "From" path
+    tasker_setvar -n LatestMovie -v "$OUTPUT_FILE" 2>/dev/null
+else
+    echo "Error: FFMPEG failed to create the output file."
+    tasker_setvar -n LatestMovie -v "ERROR" 2>/dev/null
+fi
+
+# 4. Self-Cleaning
+# Remove any temp videos older than 2 days to save space
 find "$WORK_DIR" -type f -name "*_fixed.mp4" -mtime +2 -delete
