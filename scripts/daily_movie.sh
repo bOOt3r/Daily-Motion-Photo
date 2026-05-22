@@ -1,5 +1,10 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
+# Re-exec under bash if invoked via sh/dash (Tasker/su sometimes bypasses shebang).
+if [ -z "$BASH_VERSION" ]; then
+    exec /data/data/com.termux/files/usr/bin/bash "$0" "$@"
+fi
+
 # ==============================================================================
 # DAILY MOVIE: AUTO-SYNC WITH LOGGING
 # ------------------------------------------------------------------------------
@@ -32,7 +37,7 @@ mkdir -p "$WORK_DIR" "$OUTPUT_DIR" "$LOG_DIR"
 # Use today's logical day for the log filename, derived from current time.
 NOW_HOUR=$(date +%H)
 if [ "$((10#$NOW_HOUR))" -lt "$CUTOFF_HOUR" ]; then
-    LOG_DATE=$(date -d "yesterday" +%Y%m%d 2>/dev/null || date -v-1d +%Y%m%d)
+    LOG_DATE=$(date -d "yesterday" +%Y%m%d)
 else
     LOG_DATE=$(date +%Y%m%d)
 fi
@@ -73,7 +78,7 @@ rm -f "$LIST_FILE"
 # --- DATE HELPERS ---
 # Compute yesterday and today as YYYYMMDD
 TODAY=$(date +%Y%m%d)
-YESTERDAY=$(date -d "yesterday" +%Y%m%d 2>/dev/null || date -v-1d +%Y%m%d)
+YESTERDAY=$(date -d "yesterday" +%Y%m%d)
 
 # Given a Pixel filename like PXL_20250521_153012345MP.jpg, return the
 # logical-day YYYYMMDD according to the 04:00 cutoff rule.
@@ -89,8 +94,7 @@ logical_day_for_file() {
     fi
     if [ "$((10#$file_hour))" -lt "$CUTOFF_HOUR" ]; then
         # Belongs to previous calendar day
-        date -d "$file_date -1 day" +%Y%m%d 2>/dev/null \
-            || date -j -v-1d -f "%Y%m%d" "$file_date" +%Y%m%d 2>/dev/null
+        date -d "$file_date -1 day" +%Y%m%d
     else
         echo "$file_date"
     fi
