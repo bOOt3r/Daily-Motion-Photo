@@ -1,3 +1,4 @@
 daily_movie
-movie
-temp_videos
+movie/
+temp_videos/
+logs/

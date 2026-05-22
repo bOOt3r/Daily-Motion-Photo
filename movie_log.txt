@@ -1,9 +1,2 @@
---- Run started at Mon Feb 23 08:31:43 CET 2026 for 20260223 ---
-/sdcard/Tasker/DailyMovie/temp_videos/PXL_20260222_074804822.MP_fixed.mp4
-/sdcard/Tasker/DailyMovie/temp_videos/PXL_20260222_090452635.MP_fixed.mp4
-/sdcard/Tasker/DailyMovie/temp_videos/PXL_20260222_124438623.MP_fixed.mp4
-/sdcard/Tasker/DailyMovie/temp_videos/PXL_20260222_124557103.MP_fixed.mp4
-Processing: PXL_20260223_072839389.MP
-Stitching 1 clips...
-Triggering Media Scan...
-Success. Saved to /sdcard/Tasker/DailyMovie/movie/Movie_20260223.mp4
+--- Session started at Thu May 21 14:27:30 CEST 2026 for 20260521 ---
+/sdcard/Tasker/DailyMovie/scripts/daily_movie.sh[33]: syntax error: unexpected '< '
