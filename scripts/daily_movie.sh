@@ -5,6 +5,11 @@ if [ -z "$BASH_VERSION" ]; then
     exec /data/data/com.termux/files/usr/bin/bash "$0" "$@"
 fi
 
+# Force Termux binaries to take precedence over Android's toybox/system ones.
+# Without this, `date`, `sed`, `find`, etc. resolve to /system/bin versions which
+# behave very differently (e.g. toybox `date -d "yesterday"` fails).
+export PATH="/data/data/com.termux/files/usr/bin:$PATH"
+
 # ==============================================================================
 # DAILY MOVIE: AUTO-SYNC WITH LOGGING
 # ------------------------------------------------------------------------------
@@ -94,7 +99,8 @@ logical_day_for_file() {
     fi
     if [ "$((10#$file_hour))" -lt "$CUTOFF_HOUR" ]; then
         # Belongs to previous calendar day
-        date -d "$file_date -1 day" +%Y%m%d
+        local y=${file_date:0:4} m=${file_date:4:2} d=${file_date:6:2}
+        date -d "$y-$m-$d 12:00:00 -1 day" +%Y%m%d
     else
         echo "$file_date"
     fi
