@@ -1,2 +1,0 @@
---- Session started at Thu May 21 14:27:30 CEST 2026 for 20260521 ---
-/sdcard/Tasker/DailyMovie/scripts/daily_movie.sh[33]: syntax error: unexpected '< '

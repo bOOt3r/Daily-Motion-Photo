@@ -81,15 +81,32 @@ trap 'rm -f "$LOCK_FILE"' EXIT INT TERM
 rm -f "$LIST_FILE"
 
 # --- DATE HELPERS ---
-# Compute yesterday and today as YYYYMMDD
-TODAY=$(date +%Y%m%d)
-YESTERDAY=$(date -d "yesterday" +%Y%m%d)
+NOW_HOUR=$(date +%H)
+
+# Check if a manual date argument (YYYYMMDD) was provided
+if [ -n "$1" ]; then
+    TARGET_DATE="$1"
+    # Parse the manually provided date to set the proper calendar bounds for the glob
+    y=${TARGET_DATE:0:4} m=${TARGET_DATE:4:2} d=${TARGET_DATE:6:2}
+    TODAY=$(date -d "$y-$m-$d +1 day" +%Y%m%d)
+    YESTERDAY="$TARGET_DATE"
+    echo "Manual override triggered for logical day: $TARGET_DATE"
+else
+    # Auto-detect based on current clock time
+    TODAY=$(date +%Y%m%d)
+    YESTERDAY=$(date -d "yesterday" +%Y%m%d)
+
+    if [ "$((10#$NOW_HOUR))" -lt "$CUTOFF_HOUR" ]; then
+        TARGET_DATE="$YESTERDAY"
+    else
+        TARGET_DATE="$TODAY"
+    fi
+fi
 
 # Given a Pixel filename like PXL_20250521_153012345MP.jpg, return the
 # logical-day YYYYMMDD according to the 04:00 cutoff rule.
 logical_day_for_file() {
     local fname="$1"
-    # Extract YYYYMMDD and HH from PXL_YYYYMMDD_HHMMSS...
     local file_date file_hour
     file_date=$(echo "$fname" | sed -n 's/^PXL_\([0-9]\{8\}\)_.*/\1/p')
     file_hour=$(echo "$fname" | sed -n 's/^PXL_[0-9]\{8\}_\([0-9]\{2\}\).*/\1/p')
@@ -97,6 +114,7 @@ logical_day_for_file() {
         echo ""
         return
     fi
+    # Use file_hour here so individual photos are grouped correctly!
     if [ "$((10#$file_hour))" -lt "$CUTOFF_HOUR" ]; then
         # Belongs to previous calendar day
         local y=${file_date:0:4} m=${file_date:4:2} d=${file_date:6:2}
@@ -106,12 +124,6 @@ logical_day_for_file() {
     fi
 }
 
-# Determine the TARGET logical day for THIS run (based on current time).
-if [ "$((10#$NOW_HOUR))" -lt "$CUTOFF_HOUR" ]; then
-    TARGET_DATE="$YESTERDAY"
-else
-    TARGET_DATE="$TODAY"
-fi
 OUTPUT_FILE="$OUTPUT_DIR/Movie_$TARGET_DATE.mp4"
 echo "Target logical day: $TARGET_DATE"
 echo "Output: $OUTPUT_FILE"
