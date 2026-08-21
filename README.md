@@ -34,3 +34,12 @@ The finished movie is stored in:
 ## Does it require root?
 
 **No.**
+
+## Requirements
+
+Termux
+FFmpeg
+grep
+
+## Optional (but highly recommended)
+Tasker
